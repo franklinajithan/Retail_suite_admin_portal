@@ -55,14 +55,14 @@ const FruitVegCard = ({ data, barcode, startDate, endDate }: PromoCardProps) => 
         const textSizeClass = String(item.price).length <= 4 ? "text-[100px]" : "text-[93px]";
 
         return (
-          <div className="border-8  border-[#c23b32] mb-2 h-[100%] w-[100%] bg-white rounded-[15px] shadow-md overflow-hidden mx-auto" key={item.barcode + index}>
+          <div className="border-8  border-[#c23b32] mb-2  bg-white rounded-[15px] shadow-md overflow-hidden mx-auto" key={item.barcode + index}>
             <div>
               <div className="flex flex-wrap items-center justify-between mb-2">
                 <div className="w-1/6 p-2">
                   <img className="mt-2 w-[166px] ml-2" src={logo} alt="Logo" />
                 </div>
                 <div className="w-5/6 text-center relative">
-                  <div className="text-[#c23b32] text-[47px] font-extrabold font-sans mb-3">POLSKIE SUPERMARKETY MIESZKO</div>
+                  <div className="text-[#c23b32]  fontFamily: 'Arrus Blk BT', text-[47px] font-extrabold font-sans mb-3">POLSKIE SUPERMARKETY MIESZKO</div>
 
                   <div className=" border-b-4 border-[#c23b32] w-full mx-auto" />
                 </div>
@@ -86,7 +86,6 @@ const FruitVegCard = ({ data, barcode, startDate, endDate }: PromoCardProps) => 
               <div className="flex flex-wrap">
                 <div className="w-6/12">
                   <div className="h-[425px] w-[550px] ml-2 flex justify-center items-center">{item.barcode && <ImageProcessor imageUrl={imageUrl + "label/" + item.barcode + ".webp"} maxHeight={475} maxWidth={550} />}</div>
-           
                 </div>
                 <div className="w-6/12">
                   <div className="mt-12 relative flex flex-col items-center">
@@ -94,7 +93,7 @@ const FruitVegCard = ({ data, barcode, startDate, endDate }: PromoCardProps) => 
 
                     {!String(item.price).toLowerCase().includes("for") && (
                       <div className="absolute flex flex-col items-center justify-center w-full h-full top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-                        <span className={`text-black font-bold font-revert-layer ${textSizeClass}`}>{formattedPrice}</span>
+                        <span className={`text-black font-bold font-revert-layer ${textSizeClass}`}>{item.price}</span>
                         <span className="text-white text-[46px] font-bold mb-6">{item.uom}</span>
                       </div>
                     )}
@@ -115,13 +114,13 @@ const FruitVegCard = ({ data, barcode, startDate, endDate }: PromoCardProps) => 
                 <div className="flex">
                   <div className={`w-9/12 self-end  `}>
                     <div className="mt-0 mr-4">
-                      <div className={`text-[#000] ml-5 mb-3 font-bold whitespace-nowrap text-left text-[60px]`}>{item.itemName}</div>
+                      <div className={`text-[#000] ml-5 mb-3 font-extrabold whitespace-nowrap text-left uppercase ${item.itemName.length > 46 ? "text-[20px]" : item.itemName.length > 40 ? "text-[28px]" : item.itemName.length > 30 ? "text-[30px]" : "text-[35px]"}`}>{item.itemName}</div>{" "}
                     </div>
                   </div>
                   <div className="w-3/12 self-end mr-5">
                     {barcode && item.barcode && (
                       <div className="float-right">
-                        <Barcode marginTop={0} marginLeft={0} marginBottom={0} marginRight={0} fontSize={20} value={item.barcode} format="CODE128" width={2} height={50} background="#ffffff" displayValue={false} />
+                        <Barcode marginTop={0} marginLeft={0} marginBottom={0} marginRight={0} fontSize={20} value={item.barcode} format="CODE128" width={2} height={30} background="#ffffff" displayValue={false} />
                         <div className={`text-[40px] font-bold`}>{item.barcode}</div>
                       </div>
                     )}
@@ -135,5 +134,7 @@ const FruitVegCard = ({ data, barcode, startDate, endDate }: PromoCardProps) => 
     </div>
   );
 };
+
+//Testing my typing speed
 
 export default FruitVegCard;

@@ -91,10 +91,14 @@ export const DeliCard = ({ data, barcode, startDate, endDate }: DeliCardProps) =
         try {
           return object.map((item: any, index: any) => {
             const actualPricePerKg = Number(item?.price || 0);
+            //const retailPriceFor100g = actualPricePerKg / 10;
             const retailPriceFor100g = actualPricePerKg / 10;
-
             const borderColor = item?.itemName.length !== 0 ? "border-red-600" : "border-white";
+            const nameLength = item?.itemName.length || 0;
 
+            const imageSizeClass = nameLength > 60 ? "w-16 h-16" : nameLength > 40 ? "w-20 h-20" : nameLength > 20 ? "w-24 h-24" : "w-28 h-28";
+
+            const textSizeClass = nameLength > 60 ? "text-[14px]" : nameLength > 40 ? "text-[16px]" : nameLength > 20 ? "text-[18px]" : "text-[20px]";
             return (
               <div className="items-center rounded-lg" key={index} style={{ marginBottom: "7px" }}>
                 <div className={`border-4 ${borderColor} h-56 bg-white rounded-lg`}>
@@ -106,7 +110,9 @@ export const DeliCard = ({ data, barcode, startDate, endDate }: DeliCardProps) =
                       {/* Center the logo vertically and horizontally */}
                       {item?.itemName.toString().length !== 0 && <img className="mt-2 ml-1 w-85" src={logo} alt="logo" />}
                     </div>
-                    <div className={`w-5/6 text-center font-bold flex items-center justify-center ${item?.itemName.toString().length > 40 ? "text-[18px]" : "text-[20px]"}`}>{item?.itemName.replace(weightRegex, "").trim().toUpperCase()}</div>
+                    <div className="flex flex-col items-center justify-center text-center w-full">
+                      <div className={`font-bold ${textSizeClass} leading-tight break-words w-5/6`}>{item?.itemName.replace(weightRegex, "").trim().toUpperCase()}</div>
+                    </div>
                   </div>
 
                   {item?.itemName.length !== 0 && (

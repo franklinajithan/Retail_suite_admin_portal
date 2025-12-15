@@ -78,8 +78,8 @@ const ProductForm: React.FC<ProductFormProps> = ({ id, type }) => {
   const [supplierItemData, setSupplierItemData] = useState<any>([]);
   const { toast } = useToast();
 
-  const form = useForm<ProductFormData>({
-    resolver: zodResolver(productFormSchema),
+  const form = useForm<any>({
+    resolver: zodResolver(z.any()),
     defaultValues: {
       id: 0,
       itemCode: "",
@@ -141,9 +141,14 @@ const ProductForm: React.FC<ProductFormProps> = ({ id, type }) => {
         isConsideredForPurchasePlan: false,
       },
     },
+    mode: "onChange",
   });
 
-  const { handleSubmit, reset } = form;
+  const {
+    handleSubmit,
+    reset,
+    formState: { errors, isSubmitting },
+  } = form;
 
   useEffect(() => {
     const fetchCategory = async () => {
@@ -182,7 +187,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ id, type }) => {
 
     const fetchProductDetails = async () => {
       try {
-        const result = await getItemDetail(id);
+        const result = await getItemDetail(id || 0);
         if (result.status === 200) {
           setProductDetails(result.data.data);
         }
@@ -205,21 +210,75 @@ const ProductForm: React.FC<ProductFormProps> = ({ id, type }) => {
     }
   }, [productDetails, reset]);
 
-  const onSubmit = async (data: ProductFormData) => {
-    setIsLoading(true);
+  const onSubmit = async (data: any) => {
+    console.log("onSubmit function called with data:", data);
+
     try {
-      const result = await addProduct(data);
+      // Convert null values to false for item_details
+      const itemDetails = data.item_details ? Object.fromEntries(Object.entries(data.item_details).map(([key, value]) => [key, typeof value === "boolean" ? value : false])) : {};
+
+      // Handle translatedAllergicDetails
+      const translatedAllergicDetails = typeof data.translatedAllergicDetails === "object" ? JSON.stringify(data.translatedAllergicDetails) : String(data.translatedAllergicDetails || "");
+
+      const formattedData = {
+        ...data,
+        item_details: itemDetails,
+        translatedAllergicDetails,
+        // Ensure these fields are at least empty strings if undefined
+        item_image: data.item_image || "",
+        categoryId: data.categoryId || "",
+        parentCategory: data.parentCategory || "",
+        childCategory: data.childCategory || "",
+      };
+
+      console.log("Formatted data being submitted:", formattedData);
+      console.log("Setting loading state to true");
+      setIsLoading(true);
+
+      console.log("Calling addProduct API with data:", formattedData);
+      const result = await addProduct(formattedData);
+      console.log("API Response:", result);
+
       if (result.status === 201) {
+        console.log("Product added successfully");
         if (selectedImageFile) {
+          console.log("Image file selected, uploading...");
           await uploadImage(result.data.data);
+          console.log("Image upload completed");
         }
-        toast({ variant: "success", title: result.data.status, description: result.data.message, duration: 800 });
+        toast({
+          variant: "success",
+          title: result.data.status,
+          description: result.data.message,
+          duration: 800,
+        });
+        return true; // Indicate successful submission
       } else {
-        toast({ variant: "destructive", title: result.data.status, description: result.data.message, duration: 800 });
+        console.log("Product add failed with status:", result.status);
+        toast({
+          variant: "destructive",
+          title: result.data.status,
+          description: result.data.message,
+          duration: 800,
+        });
+        return false; // Indicate failed submission
       }
     } catch (e: any) {
-      toast({ variant: "destructive", title: e.response?.status || "Error", description: e.response?.data?.message || "An error occurred", duration: 800 });
+      console.error("Form submission error:", e);
+      console.error("Error details:", {
+        message: e.message,
+        response: e.response?.data,
+        status: e.response?.status,
+      });
+      toast({
+        variant: "destructive",
+        title: e.response?.status || "Error",
+        description: e.response?.data?.message || "An error occurred",
+        duration: 800,
+      });
+      return false; // Indicate failed submission
     } finally {
+      console.log("Setting loading state to false");
       setIsLoading(false);
     }
   };
@@ -477,7 +536,25 @@ const ProductForm: React.FC<ProductFormProps> = ({ id, type }) => {
     <Card className="card-one mt-2">
       <CardContent>
         <Form {...form}>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+          <form
+            onSubmit={async (e) => {
+              e.preventDefault();
+              console.log("Form onSubmit event triggered");
+              console.log("Form element:", e.target);
+              console.log("Form values before submit:", form.getValues());
+              console.log("Form validation state:", form.formState);
+              console.log("Is submitting:", isSubmitting);
+              console.log("Is loading:", isLoading);
+
+              try {
+                const result = await handleSubmit(onSubmit)(e);
+                console.log("Form submission result:", result);
+              } catch (error) {
+                console.error("Form submission error:", error);
+              }
+            }}
+            className="space-y-8"
+          >
             <div className="md:flex">
               <ul className="flex-column space-y-4 text-sm font-medium text-zinc-500 dark:text-zinc-400 md:me-4 mb-4 md:mb-0 mt-1">
                 <MenuItem href="#" text="Product Details" isActive={activeItem === "ProductDetails"} onClick={() => handleMenuItemClick("ProductDetails")} />
@@ -512,7 +589,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ id, type }) => {
 
                       <Dialog open={open} onOpenChange={setOpen}>
                         <DialogTrigger asChild>
-                          <Button className="btn-cyan mb-3">Add Product from Supplier</Button>
+                          <Button className="btn-cyan mb-3">Add Product from Excel</Button>
                         </DialogTrigger>
                         <DialogContent className="sm:max-w-[1200px]">
                           <DialogHeader>
@@ -749,33 +826,89 @@ const ProductForm: React.FC<ProductFormProps> = ({ id, type }) => {
                 )}
 
                 {activeItem === "SupplierDetails" && (
-                  <div className="grid lg:grid-cols-5 md:grid-cols-3 sm:grid-cols-1 gap-4 border border-zinc-200 p-4 rounded-lg shadow-md w-full">
-                    <InputField control={form.control} label="Supplier Name" placeholder="Enter supplier name" name="supplierName" type="text" required />
-                    <InputField control={form.control} label="Supplier Item Code" placeholder="Enter supplier item code" name="supplierItemCode" type="text" />
-                    <InputField control={form.control} label="Supplier Inner EAN" placeholder="Enter supplier inner EAN" name="supplierInnerEan" type="text" />
-                    <InputField control={form.control} label="Supplier Outer Barcode" placeholder="Enter supplier outer barcode" name="supplierOuterBarcode" type="text" />
-                    <InputField control={form.control} label="Supplier Case Size" placeholder="Enter supplier case size" name="supplierCaseSize" type="text" />
-                    <InputField control={form.control} label="Supplier RRP" placeholder="Enter supplier RRP" name="supplierRrp" type="number" step="0.01" />
-                    <InputField control={form.control} label="Supplier Case Cost" placeholder="Enter supplier case cost" name="supplierCaseCost" type="number" step="0.01" />
-                    <InputField control={form.control} label="Supplier Cost Each" placeholder="Enter supplier cost each" name="supplierCostEach" type="number" step="0.01" />
-                    <CalendarInput control={form.control} label="Supplier Promotion Order Start Date" name="supplierPromotionStartDate" />
-                    <CalendarInput control={form.control} label="Supplier Promotion Order End Date" name="supplierPromotionEndDate" />
+                  <div>
+                    {/* Add Supplier Dialog */}
+                    <Dialog open={open} onOpenChange={setOpen}>
+                      <DialogContent className="ml-36 sm:max-w-[1600px]">
+                        <DialogHeader>
+                          <DialogTitle>Add new Supplier</DialogTitle>
+                        </DialogHeader>
+                        <div>
+                          <div className="grid lg:grid-cols-5 md:grid-cols-3 sm:grid-cols-1 gap-4 border border-zinc-200 p-4 rounded-lg shadow-md w-full">
+                            <InputField control={form.control} label="Supplier Name" placeholder="Enter supplier name" name="supplierName" type="text" required />
+                            <InputField control={form.control} label="Supplier Item Code" placeholder="Enter supplier item code" name="supplierItemCode" type="text" />
+                            <InputField control={form.control} label="Supplier Inner EAN" placeholder="Enter supplier inner EAN" name="supplierInnerEan" type="text" />
+                            <InputField control={form.control} label="Supplier Outer Barcode" placeholder="Enter supplier outer barcode" name="supplierOuterBarcode" type="text" />
+                            <InputField control={form.control} label="Supplier Case Size" placeholder="Enter supplier case size" name="supplierCaseSize" type="text" />
+                            <InputField control={form.control} label="Supplier RRP" placeholder="Enter supplier RRP" name="supplierRrp" type="number" step="0.01" />
+                            <InputField control={form.control} label="Supplier Case Cost" placeholder="Enter supplier case cost" name="supplierCaseCost" type="number" step="0.01" />
+                            <InputField control={form.control} label="Supplier Cost Each" placeholder="Enter supplier cost each" name="supplierCostEach" type="number" step="0.01" />
+                            <CalendarInput control={form.control} label="Supplier Promotion Order Start Date" name="supplierPromotionStartDate" />
+                            <CalendarInput control={form.control} label="Supplier Promotion Order End Date" name="supplierPromotionEndDate" />
+                            <SelectField
+                              control={form.control}
+                              label="Supplier Blacklist Status"
+                              name="supplierBlacklistStatus"
+                              options={[
+                                { label: "Yes", value: "Yes" },
+                                { label: "No", value: "No" },
+                              ]}
+                              placeholder="Select blacklist status"
+                            />
+                            <div className="col-span-5">
+                              <p className="text-sm text-zinc-600 italic">You can link multiple suppliers to one product (handle in supplier management module).</p>
+                            </div>
+                          </div>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
 
-                    <SelectField
-                      control={form.control}
-                      label="Supplier Blacklist Status"
-                      name="supplierBlacklistStatus"
-                      options={[
-                        { label: "Yes", value: "Yes" },
-                        { label: "No", value: "No" },
-                      ]}
-                      placeholder="Select blacklist status"
-                    />
-
-                    {/* Multiple Supplier Links Note */}
-                    <div className="col-span-5">
-                      <p className="text-sm text-zinc-600 italic">You can link multiple suppliers to one product (handle in supplier management module).</p>
+                    {/* Toolbar with Icons */}
+                    <div className="flex items-center gap-2 mb-2">
+                      <Button className="btn-cyan mb-3">➕ Add Supplier</Button>
+                      <Button className="btn-cyan mb-3">✏️ Edit Supplier</Button>
+                      <Button className="btn-cyan mb-3">🗑️ Delete Supplier</Button>
                     </div>
+
+                    {/* DataGrid Table */}
+                    <ThemeProvider theme={theme}>
+                      <DataGrid
+                        autoHeight
+                        rows={rows}
+                        columns={[
+                          { field: "supplierName", headerName: "Supplier Name", flex: 1 },
+                          { field: "supplierItemCode", headerName: "Supplier Item Code", width: 150 },
+                          { field: "supplierInnerEan", headerName: "Inner EAN", width: 150 },
+                          { field: "supplierOuterBarcode", headerName: "Outer Barcode", width: 150 },
+                          { field: "supplierCaseSize", headerName: "Case Size", width: 100 },
+                          { field: "supplierRrp", headerName: "RRP", width: 100 },
+                          { field: "supplierCaseCost", headerName: "Case Cost", width: 100 },
+                          { field: "supplierCostEach", headerName: "Cost Each", width: 100 },
+                          { field: "supplierPromotionStartDate", headerName: "Promo Start", width: 150 },
+                          { field: "supplierPromotionEndDate", headerName: "Promo End", width: 150 },
+                          { field: "supplierBlacklistStatus", headerName: "Blacklist", width: 100 },
+                        ]}
+                        getRowId={(row: any) => row.id}
+                        rowHeight={35}
+                        columnVisibilityModel={columnVisibility}
+                        onColumnVisibilityModelChange={(newModel) => setColumnVisibility(newModel)}
+                        onRowSelectionModelChange={(newSelection: any) => setRowSelectionModel(newSelection)}
+                        initialState={{
+                          pagination: {
+                            paginationModel: { pageSize: 15, page: 0 },
+                          },
+                          filter: {
+                            filterModel: {
+                              items: [],
+                              quickFilterValues: [searchQuery],
+                            },
+                          },
+                        }}
+                        pageSizeOptions={[15, 25, 50]}
+                        slots={{ toolbar: GridToolbar }}
+                        slotProps={{ toolbar: { showQuickFilter: true } }}
+                      />
+                    </ThemeProvider>
                   </div>
                 )}
 
@@ -1018,10 +1151,20 @@ const ProductForm: React.FC<ProductFormProps> = ({ id, type }) => {
 
             <hr className="border-t border-zinc-300" />
             <div className="flex justify-end space-x-4 mt-2 pr-4">
-              <Button variant="outline" className="btn-zinc">
+              <Button variant="outline" className="btn-zinc" type="button" onClick={() => reset()}>
                 Cancel
               </Button>
-              <Button type="submit" disabled={isLoading} className="btn-cyan">
+              <Button
+                type="submit"
+                className="btn-cyan"
+                disabled={isSubmitting}
+                onClick={() => {
+                  console.log("Submit button clicked");
+                  console.log("Form state:", form.getValues());
+                  console.log("Form errors:", form.formState.errors);
+                  console.log("Is submitting:", isSubmitting);
+                }}
+              >
                 {isLoading ? (
                   <>
                     <Loader2 size={20} className="animate-spin" /> Loading...
