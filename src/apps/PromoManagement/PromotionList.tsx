@@ -137,7 +137,7 @@ const PromotionList: React.FC<{ title: string; icon: any }> = ({ title, icon }) 
       renderCell: (params) => {
         // const imageUrlWithNoCache = `${imageUrl}${params.row.image}?${new Date().getTime()}`;
         const imageUrlWithNoCache = `http://217.38.114.217:5000/api/img/label/'${params.row.image}`;
-        console.log(imageUrl);
+        console.log("Test"+imageUrl);
 
         return (
           <Tooltip title={<ImageProcessor imageUrl={imageUrlWithNoCache} maxHeight={300} maxWidth={300} backgroundWhite />} arrow placement="top" classes={{ tooltip: "bg-transparent" }}>
