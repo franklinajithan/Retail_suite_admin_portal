@@ -136,7 +136,7 @@ const PromotionList: React.FC<{ title: string; icon: any }> = ({ title, icon }) 
       editable: false,
       renderCell: (params) => {
         // const imageUrlWithNoCache = `${imageUrl}${params.row.image}?${new Date().getTime()}`;
-        const imageUrlWithNoCache = `http://217.38.114.217:5000/api/img/label/'${params.row.image}`;
+        const imageUrlWithNoCache = `http://217.38.114.217:5000/api/img/label/${params.row.image}`;
         console.log("Test"+imageUrl);
 
         return (
