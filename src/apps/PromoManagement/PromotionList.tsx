@@ -2,28 +2,10 @@ import React, { useEffect, useState } from "react";
 import HeaderComponents from "@/components/elements/HeaderSection";
 import { Card } from "react-bootstrap";
 import { CardContent } from "@/components/ui/card";
-import {
-  GridActionsCellItem,
-  DataGrid,
-  GridColDef,
-  GridRowId,
-  GridRowModes,
-  GridRowModesModel,
-  GridToolbar,
-  GridColumnVisibilityModel,
-  GridRowSelectionModel,
-  GridEventListener,
-  GridRowEditStopReasons,
-  useGridApiRef,
-} from "@mui/x-data-grid";
+import { GridActionsCellItem, DataGrid, GridColDef, GridRowId, GridRowModes, GridRowModesModel, GridToolbar, GridColumnVisibilityModel, GridRowSelectionModel, GridEventListener, GridRowEditStopReasons, useGridApiRef } from "@mui/x-data-grid";
 import { ThemeProvider } from "@mui/material/styles";
 import theme from "@/components/elements/GridTheme";
-import {
-  getPromotionProductList,
-  updateProductList,
-  uploadLabelImage,
-  uploadPromotionList,
-} from "@/service/promotion.service";
+import { getPromotionProductList, updateProductList, uploadLabelImage, uploadPromotionList } from "@/service/promotion.service";
 import { useNavigate } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import * as XLSX from "xlsx";
@@ -51,10 +33,7 @@ import { imageUrl } from "@/_config";
 import SelectField from "@/components/elements/SelectField";
 import { getStore } from "@/service/store.service";
 
-const PromotionList: React.FC<{ title: string; icon: any }> = ({
-  title,
-  icon,
-}) => {
+const PromotionList: React.FC<{ title: string; icon: any }> = ({ title, icon }) => {
   const { t } = useTranslation("global");
   const navigate = useNavigate();
   const [rowModesModel, setRowModesModel] = useState<GridRowModesModel>({});
@@ -66,10 +45,8 @@ const PromotionList: React.FC<{ title: string; icon: any }> = ({
   const random = Math.floor(Math.random() * 100000);
   const imgUrl: any = imageUrl;
   const timestamp = new Date().getTime();
-  const [rowSelectionModel, setRowSelectionModel] =
-    React.useState<GridRowSelectionModel>([]);
-  const [columnVisibility, setColumnVisibility] =
-    useState<GridColumnVisibilityModel>({});
+  const [rowSelectionModel, setRowSelectionModel] = React.useState<GridRowSelectionModel>([]);
+  const [columnVisibility, setColumnVisibility] = useState<GridColumnVisibilityModel>({});
 
   const [dataForPdf, setDataForPdf] = useState([]);
   const [promoStartDate, setPromoStartDate] = useState<string | null>(null);
@@ -80,10 +57,7 @@ const PromotionList: React.FC<{ title: string; icon: any }> = ({
     setIsLoading(true);
     try {
       const promotionResponse = await getPromotionProductList();
-      if (
-        promotionResponse.status === 200 ||
-        promotionResponse.status === 201
-      ) {
+      if (promotionResponse.status === 200 || promotionResponse.status === 201) {
         promotionResponse.data.data.forEach((element: any) => {
           element.image = element.barcode + ".webp";
         });
@@ -125,9 +99,7 @@ const PromotionList: React.FC<{ title: string; icon: any }> = ({
   useEffect(() => {
     setReloadFrame(false);
     if (rows.length > 0) {
-      const selectedRows: any = rows.filter((row) =>
-        rowSelectionModel.includes(row.labelId)
-      );
+      const selectedRows: any = rows.filter((row) => rowSelectionModel.includes(row.labelId));
 
       setDataForPdf(selectedRows);
     }
@@ -145,34 +117,15 @@ const PromotionList: React.FC<{ title: string; icon: any }> = ({
         const isInEditMode = rowModesModel[id]?.mode === GridRowModes.Edit;
 
         return isInEditMode
-          ? [
-              <GridActionsCellItem
-                icon={<SaveIcon />}
-                label="Save"
-                onClick={handleSaveClick(id)}
-              />,
-              <GridActionsCellItem
-                icon={<CancelIcon />}
-                label="Cancel"
-                onClick={handleCancelClick(id)}
-              />,
-            ]
+          ? [<GridActionsCellItem icon={<SaveIcon />} label="Save" onClick={handleSaveClick(id)} />, <GridActionsCellItem icon={<CancelIcon />} label="Cancel" onClick={handleCancelClick(id)} />]
           : [
-              <GridActionsCellItem
-                icon={<EditIcon />}
-                label="Edit"
-                onClick={handleEditClick(id)}
-              />,
+              <GridActionsCellItem icon={<EditIcon />} label="Edit" onClick={handleEditClick(id)} />,
               <GridActionsCellItem
                 icon={<UploadIcon fontSize="small" />} // or "medium" or "large"
                 label="Upload"
                 onClick={handleUploadClick(id)} // Make sure to use the correct handler
               />,
-              <GridActionsCellItem
-                icon={<DeleteIcon />}
-                label="Delete"
-                onClick={handleDeleteClick(id)}
-              />,
+              <GridActionsCellItem icon={<DeleteIcon />} label="Delete" onClick={handleDeleteClick(id)} />,
             ];
       },
     },
@@ -184,25 +137,11 @@ const PromotionList: React.FC<{ title: string; icon: any }> = ({
       renderCell: (params) => {
         // const imageUrlWithNoCache = `${imageUrl}${params.row.image}?${new Date().getTime()}`;
         const imageUrlWithNoCache = `${imageUrl}label/${params.row.image}`;
+        console.log(imageUrl);
+        
         return (
-          <Tooltip
-            title={
-              <ImageProcessor
-                imageUrl={imageUrlWithNoCache}
-                maxHeight={300}
-                maxWidth={300}
-                backgroundWhite
-              />
-            }
-            arrow
-            placement="top"
-            classes={{ tooltip: "bg-transparent" }}
-          >
-            <img
-              src={imageUrlWithNoCache}
-              alt="Product"
-              className="w-30 h-auto object-contain"
-            />
+          <Tooltip title={<ImageProcessor imageUrl={imageUrlWithNoCache} maxHeight={300} maxWidth={300} backgroundWhite />} arrow placement="top" classes={{ tooltip: "bg-transparent" }}>
+            <img src={imageUrlWithNoCache} alt="Product" className="w-30 h-auto object-contain" />
           </Tooltip>
         );
       },
@@ -290,14 +229,8 @@ const PromotionList: React.FC<{ title: string; icon: any }> = ({
     const updatePromoData = async () => {
       setReloadFrame(false);
       try {
-        const promotionResponse = await updateProductList(
-          newRow.labelId,
-          newRow
-        );
-        if (
-          promotionResponse.status === 200 ||
-          promotionResponse.status === 201
-        ) {
+        const promotionResponse = await updateProductList(newRow.labelId, newRow);
+        if (promotionResponse.status === 200 || promotionResponse.status === 201) {
           // Alert Should come here
         } else {
           console.error(promotionResponse.data);
@@ -310,32 +243,18 @@ const PromotionList: React.FC<{ title: string; icon: any }> = ({
     };
     updatePromoData();
     // Update the rows state with the new data
-    const updatedRows = rows.map((row) =>
-      row.labelId === newRow.labelId ? newRow : row
-    );
+    const updatedRows = rows.map((row) => (row.labelId === newRow.labelId ? newRow : row));
     setRows(updatedRows);
 
     return newRow; // Return the updated row
   };
 
-  const handleRowEditStop: GridEventListener<"rowEditStop"> = (
-    params,
-    event
-  ) => {
+  const handleRowEditStop: GridEventListener<"rowEditStop"> = (params, event) => {
     if (params.reason === GridRowEditStopReasons.rowFocusOut) {
       event.defaultMuiPrevented = true;
     }
   };
-  const headers = [
-    "barcode",
-    "brand",
-    "uom",
-    "size",
-    "itemName",
-    "price",
-    "image",
-    "date",
-  ];
+  const headers = ["barcode", "brand", "uom", "size", "itemName", "price", "image", "date"];
 
   const CreatePdfFile = () => {
     const pdfContent = document.getElementById("pdf")?.innerHTML;
@@ -394,26 +313,15 @@ const PromotionList: React.FC<{ title: string; icon: any }> = ({
   return (
     <div className="main main-app p-lg-1">
       <div className="min-h-screen bg-zinc-50">
-        <Dialog
-          open={uploadDialogOpen}
-          onClose={() => setUploadDialogOpen(false)}
-        >
+        <Dialog open={uploadDialogOpen} onClose={() => setUploadDialogOpen(false)}>
           <DialogTitle>Upload Image</DialogTitle>
           <DialogActions>
             {/* <Button onClick={handleUpload}>Upload</Button> */}
-            <Button
-              className="btn-zinc"
-              onClick={() => setUploadDialogOpen(false)}
-            >
+            <Button className="btn-zinc" onClick={() => setUploadDialogOpen(false)}>
               Cancel
             </Button>
             <label className="flex items-center cursor-pointer">
-              <input
-                type="file"
-                accept=".jpg, .png, .jpeg, .webp"
-                onChange={handleUpload}
-                className="hidden"
-              />
+              <input type="file" accept=".jpg, .png, .jpeg, .webp" onChange={handleUpload} className="hidden" />
               <span className="btn-cyan ">Upload Image</span>
             </label>
           </DialogActions>
@@ -458,10 +366,7 @@ const PromotionList: React.FC<{ title: string; icon: any }> = ({
             <div className="grid grid-cols-6 gap-4 items-end mb-3 mt-1">
               {/* Date Picker */}
               <div className="col-span-2">
-                <DatePickerWithRange
-                  dateRange={selectedRange}
-                  onSelectDateRange={handleDateRangeSelect}
-                />
+                <DatePickerWithRange dateRange={selectedRange} onSelectDateRange={handleDateRangeSelect} />
               </div>
 
               {/* Barcode Toggle */}
@@ -470,32 +375,18 @@ const PromotionList: React.FC<{ title: string; icon: any }> = ({
                   <div>
                     <span>Barcode</span>
                   </div>
-                  <IOSSwitch
-                    checked={showBarcodeButton}
-                    onChange={toggleSwitchBarcode}
-                    className="ml-2"
-                  />
+                  <IOSSwitch checked={showBarcodeButton} onChange={toggleSwitchBarcode} className="ml-2" />
                 </div>
               </div>
 
               {/* Store Select Field */}
               <div className="col-span-1">
-                <SelectField
-                  label="Store"
-                  name="store"
-                  placeholder="Select Store"
-                  options={storeList}
-                  onChange={(store: any) => setSelectedStore(store)}
-                />
+                <SelectField label="Store" name="store" placeholder="Select Store" options={storeList} onChange={(store: any) => setSelectedStore(store)} />
               </div>
 
               {/* Print Button */}
               <div className="col-span-1">
-                <Button
-                  className="btn-cyan w-full"
-                  onClick={CreatePdfFile}
-                  disabled={!selectedStore}
-                >
+                <Button className="btn-cyan w-full" onClick={CreatePdfFile} disabled={!selectedStore}>
                   <FontAwesomeIcon icon={faPrint} className="mr-2" />
                   Print
                 </Button>
@@ -525,9 +416,7 @@ const PromotionList: React.FC<{ title: string; icon: any }> = ({
                       setRowSelectionModel(newRowSelectionModel);
                     }}
                     columnVisibilityModel={columnVisibility}
-                    onColumnVisibilityModelChange={(newModel) =>
-                      setColumnVisibility(newModel)
-                    }
+                    onColumnVisibilityModelChange={(newModel) => setColumnVisibility(newModel)}
                     processRowUpdate={processRowUpdate}
                     getRowId={(row) => row.labelId}
                     rowHeight={35}
@@ -555,20 +444,12 @@ const PromotionList: React.FC<{ title: string; icon: any }> = ({
         <Card className="card-one mt-2">
           <CardTitle title="Uploaded Excel" />
           <div className="ml-auto">
-            <CardContent
-              className="w-full"
-              style={{ transform: "scale(0.5)", transformOrigin: "top left" }}
-            >
+            <CardContent className="w-full" style={{ transform: "scale(0.5)", transformOrigin: "top left" }}>
               {reloadFrame && (
                 <div>
                   {" "}
                   <iframe id="theFrame" name="theFrame"></iframe>
-                  <PromoCard
-                    data={dataForPdf}
-                    barcode={showBarcodeButton}
-                    startDate={promoStartDate}
-                    endDate={promoEndDate}
-                  />
+                  <PromoCard data={dataForPdf} barcode={showBarcodeButton} startDate={promoStartDate} endDate={promoEndDate} />
                 </div>
               )}
             </CardContent>
